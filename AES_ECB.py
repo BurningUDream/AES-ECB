@@ -35,22 +35,23 @@ rcon = ["01", "0", "0", "0", "02", "0", "0", "0",
 		"40", "0", "0", "0", "80", "0", "0", "0", 
 		"1b", "0", "0", "0", "36", "0", "0", "0"]
 
+def hexify(text):
+	list = []
+	text = binascii.hexlify(text)
+	for num in range(0, len(text), 2):
+		list.append(text[num:num+2])
+	return list
+		
 def zero(byte):
 	if len(byte) < 2:
 		return "0" + byte
 	return byte
 
-def xor(message, key):###############################
+def xor(message, key):
 	xored = []
 	for i in range(len(key)):
 		xored.append(zero(hex(int(message[i], 16) ^ int(key[i], 16))[2:]))
 	return xored
-	
-def hexify(message):###############################
-	hexed = []
-	for char in message:
-		hexed.append(hex(ord(char))[2:])
-	return hexed
 	
 def padder(message):
 	global reps
@@ -63,13 +64,11 @@ def padder(message):
 		reps += 1
 	else:
 		reps = 1
-	return message	
+	return message
 	
 def bin_padding(binary):
 	binary = bin(binary)[2:]
-	while len(binary) < 8:
-		binary = "0" + binary
-	return binary
+	return "0" * (8 - len(str(binary))) + binary
 
 def key_check(key):
 	if len(key) < 16:
@@ -92,22 +91,18 @@ def multiply(number, original, triply=0):
 		number ^= int(original, 2)
 	return number
 	
-def hex2ascii(hex):###############################
+def hex2ascii(hex):
 	ascii = []
-	temp = ""
-	for h in range(0, len(hex)):
-		temp += hex[h]
-		if len(temp) == 2:
-			ascii.append(temp)
-			temp = ""	
+	for num in range(0, len(hex), 2):
+		ascii.append(hex[num:num+2])
 	return ascii
 	
-def SubBytes(message):###############################
+def SubBytes(message):
 	subbed = []
 	map(lambda char : subbed.append(hex(s_box[int(zero(char)[0], 16) * 16 + int(char[-1], 16)])[2:]), message)
 	return subbed
 
-def ShiftRows(message):###############################
+def ShiftRows(message):
 	shifted = []
 	map(lambda char : shifted.append(zero(char)), message)
 	
@@ -117,7 +112,7 @@ def ShiftRows(message):###############################
 				shifted[i], shifted[i+12-j*4] = shifted[i+12-j*4], shifted[i]
 	return shifted
 	
-def MixColumns(message):###############################
+def MixColumns(message):
 	mixed = []
 	for k in range(4):
 		for i in range(4):
@@ -136,7 +131,7 @@ def MixColumns(message):###############################
 			mixed.append(zero(hex(cell)[2:]))
 	return mixed
 
-def KeySchedule(key, t):###############################
+def KeySchedule(key, t):
 	segment, newkey = [], []
 	for i in range(12, 16):
 		segment.append(key[i])
@@ -152,7 +147,7 @@ def KeySchedule(key, t):###############################
 		
 	return newkey	
 
-def invSubBytes(ciphertext):###############################
+def invSubBytes(ciphertext):
 	unsubbed = []
 	for char in ciphertext:
 		char = "0x" + char
@@ -160,7 +155,7 @@ def invSubBytes(ciphertext):###############################
 		
 	return unsubbed
 	
-def invShiftRows(ciphertext):###############################
+def invShiftRows(ciphertext):
 	unshifted = []
 	map(lambda char : unshifted.append(zero(char)), ciphertext)
 	
@@ -170,7 +165,7 @@ def invShiftRows(ciphertext):###############################
 				unshifted[i+12], unshifted[i+12-j*4] = unshifted[i+12-j*4], unshifted[i+12]
 	return unshifted
 		
-def invMixColumns(ciphertext):###############################
+def invMixColumns(ciphertext):
 	unmixed = []
 	for k in range(4):
 		for l in range(4):
@@ -254,65 +249,16 @@ def decrypt(ciphertext, originalkey):
 			
 if __name__ == "__main__":	
 	import pyperclip	
-	import argparse
-
-	print binascii.hexlify("test hello there mate")
-	"""parser = argparse.ArgumentParser()
 	
-	action = parser.add_mutually_exclusive_group()
-	action.add_argument("-e", "--encrypt", help="encrypt message", action='store_true')
-	action.add_argument("-d", "--decrypt", help="decrypt message", action='store_true')
-
-	message_form = parser.add_mutually_exclusive_group()
-	message_form.add_argument("-mh", "--message_hex", action='store_true', help="enter message in hex form")
-	message_form.add_argument("-mt", "--message_text", action='store_true', help="enter message in text form")
-	
-	key_form = parser.add_mutually_exclusive_group()
-	key_form.add_argument("-kh", "--key_hex", action='store_true', help="enter key in hex form")
-	key_form.add_argument("-kt", "--key_text", action='store_true', help="enter key in text form")
-	
-	args = parser.parse_args()
-	
-	if not args.encrypt and not args.decrypt:
-		parser.error('No actions provided.')
-	if not args.message_hex and not args.message_text:
-		parser.error('No message form provided.')
-	if not args.key_hex and not args.key_text:
-		parser.error('No key form provided.')
-	
+	mode = "encrypt"
 	reps = 0
-
-	if args.message_text:
-		message = padder(hexify(raw_input("Enter text message here\n> ")))	
-	elif args.message_hex:
-		message = padder(hex2ascii(raw_input("Enter hex message here\n> ")))
-		
-	if args.key_text:
-		key = hexify(raw_input("Enter text key here\n> "))
-	elif args.key_hex:
-		key = raw_input("Enter hex key here\n> ")
-
-	#key_check(key)
+	key = hexify("letstrya new key")
+	message = padder(hexify("This is just a test for my AES implementation."))
 	
-	if args.encrypt:
-		#message = padder(hexify(raw_input("Enter text message here\n> ")))
-		#key = hexify(raw_input("Enter text key here\n> "))
+	if mode == "encrypt" or mode[0] == "e":	
+		result = encrypt(message, key).upper()	
+	elif mode == "decrypt" or mode[0] == "d":
+		result = decrypt(padder(hex2ascii("120224DC5AA22650F3307CDB47D9DE159FFB59336645149E00010E5D06F6B243898D205C5695768138C2D3470D012ED4".upper())), hexify("letstrya new key"))
 		
-		print message, key
-		print encrypt(message, key).upper()
-		pyperclip.copy(encrypt(message, key).upper())
-	elif args.decrypt:
-		#message = padder(raw_input("Enter text message here\n> "))
-		#key = hexify(raw_input("Enter text key here\n> "))
-		print message, key
-		print decrypt(message, key)
-		pyperclip.copy(decrypt(message, key))
-	#if message is hex:
-	#message = padder(hex2ascii("120224DC5AA22650F3307CDB47D9DE159FFB59336645149E00010E5D06F6B243F7A32E80ED9E3EA5783323F9561CA33F507D316B399EDD84260B093386D41E90799F1328B3C305E11F491381C749A691"))
-	#print message
-	#pyperclip.copy("".join(message))
-	#key = hexify("letstrya new key")
-	
-		
-	#print encrypt(message, key).upper()
-	#print decrypt(padder(hex2ascii("538B05A713352DFD94922EA9EACE24CD".upper())), hexify("testtesttesttest"))	"""
+	print result
+	pyperclip.copy(result)

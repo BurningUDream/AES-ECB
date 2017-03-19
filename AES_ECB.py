@@ -252,13 +252,14 @@ if __name__ == "__main__":
 	
 	mode = "encrypt"
 	reps = 0
-	key = hexify("letstrya new key")
-	message = padder(hexify("This is just a test for my AES implementation."))
+	
+	key = hexify("now we try a key")
+	message = padder(hexify("This is just a test for my AES implementation."))	
 	
 	if mode == "encrypt" or mode[0] == "e":	
 		result = encrypt(message, key).upper()	
 	elif mode == "decrypt" or mode[0] == "d":
-		result = decrypt(padder(hex2ascii("120224DC5AA22650F3307CDB47D9DE159FFB59336645149E00010E5D06F6B243898D205C5695768138C2D3470D012ED4".upper())), hexify("letstrya new key"))
-		
+		result = decrypt(padder(hex2ascii("F9D4661071CA7B51A1C10360AD7BF519B1F6FEA050ACCDC8EFA0CD22B143C59716366817B7D2AE01E6E176A7CB9F6D40".upper())), key)
+	
 	print result
 	pyperclip.copy(result)
